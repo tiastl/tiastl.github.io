@@ -439,7 +439,51 @@
 <p>假如是一个1ms的延时，我们使用for来进行延时，执行一次for是8个机器周期，12MHZ的晶振，一个机器周期根据计算就是12/f=12/12=1us,1ms就是1000us，也就是1000个机器周期，所以需要1000/8=125，下面是程序</p>
 <p><img src="https://img-blog.csdnimg.cn/20201118194508874.png#pic_center"></p>
 <p>关于延时函数计算还有一种方法就是将C转换为汇编进行计算。有兴趣的可以看一下彭老师的”<a target="_blank" rel="noopener" href="https://kns.cnki.net/KXReader/Detail?TIMESTAMP=637413256346406250&DBCODE=CJFD&TABLEName=CJFD2008&FileName=DZYQ200805057&RESULT=1&SIGN=u6Tvo/Xe8miBU4o3lqGrI3AOcN0=">51系列单片机延时程序运行的计算</a>“</p>
-<h2 id="三、外部中断"><a href="#三、外部中断" class="headerlink" title="三、外部中断"></a>三、外部中断</h2><h2 id="四、定时-计数器"><a href="#四、定时-计数器" class="headerlink" title="四、定时/计数器"></a>四、定时/计数器</h2><h2 id="五、串行通信"><a href="#五、串行通信" class="headerlink" title="五、串行通信"></a>五、串行通信</h2>
+<h2 id="三、中断系统"><a href="#三、中断系统" class="headerlink" title="三、中断系统"></a>三、中断系统</h2><h3 id="1-中断概念"><a href="#1-中断概念" class="headerlink" title="1.中断概念"></a>1.中断概念</h3><p>中断系统是为使CPU具有对外界紧急事件的实时处理能力而设置的。</p>
+<p>当中央处理器CPU正在处理某件事的时候 外界发生了紧急事件请求，要求CPU暂停到当前的工作，转而去处理这个紧急事件，处理完以后，再回到原来被中断的地方，继续原来的工作，这样的过程称为中断。实现这种功能的部件称为中断系统，请示CPU中断的请求源称为中断源。微型机的中断系统一般允许多个中断源，当几个中断源同时向CPU请求中断，要求为它服务的时候，这就存在CPU优先响应哪一个中断源请求的问题。通常根据中断源的轻重缓急排队，优先处理最紧急事件的中断请求源，即规定每一个中断源有一个优先级别。CPU总是先响应优先级别最高的中断请求（这里涉及到中断优先级的问题）。</p>
+<p>当CPU正在处理一个中断源请求的时候(执行相应的中断服务程序)，发生了另外一个优先级比它还高的中断源请求。如果CPU能够暂停对原来中断源的服务程序，转而去处理优先级更高的中断请求源，处理完以后，再回到原低级中断服务程序，这样的过程称为中断嵌套。</p>
+<h3 id="2-8051的中断系统"><a href="#2-8051的中断系统" class="headerlink" title="2.8051的中断系统"></a>2.8051的中断系统</h3><p>MCS-51单片机的中断系统结构由与中断有关的特殊功能寄存器、中断入口、顺序查询电路组成，如下图</p>
+<p><img src="https://img-blog.csdnimg.cn/20201125164034975.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70#pic_center"></p>
+<p>引起中断的原因和发出中断申请的来源称为中断源。8051单片机有5个中断源，其中2个外部中断；两个片内定时/计数器溢出中断；一个串行口中断。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201125164533775.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70#pic_center"></p>
+<h3 id="3-中断控制"><a href="#3-中断控制" class="headerlink" title="3.中断控制"></a>3.中断控制</h3><p>单片机通过对4个特殊功能寄存器IE、IP、TCON和SCON的设置来进行中断允许、中断请求和中断优先级的控制。</p>
+<h4 id="（1）中断允许寄存器IE"><a href="#（1）中断允许寄存器IE" class="headerlink" title="（1）中断允许寄存器IE"></a>（1）中断允许寄存器IE</h4><p>单片机是否接受中断申请，以及接受哪一种中断申请，都由IE来控制。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201125171036623.png#pic_center"></p>
+<p>其中EA是总中断控制位，使用中断前必须开启总中断，置1时开启中断，置0时关闭中断。</p>
+<p>EX0，EX1是外部中断控制位，置1时开启中断，置0时关闭中断。</p>
+<p>ET0,ET1时是T0,T1中断控制位，置1时开启中断，置0时关闭中断。</p>
+<p>ES是串行口中断控制位，置1时开启中断，置0时关闭中断。</p>
+<h4 id="（2）中断优先级寄存器IP"><a href="#（2）中断优先级寄存器IP" class="headerlink" title="（2）中断优先级寄存器IP"></a>（2）中断优先级寄存器IP</h4><p>中断请求源有两个中断优先级，每一个中断请求源可由软件设置为高优先级中断或者低优先级中断，也可以实现两级中断嵌套。</p>
+<p>所谓两级中断嵌套，就是8051正在 执行低优先级中断的服务程序时，可被高优先级中断请求 所打断，待高优先级中断处理完毕后，再返回低优先级中断服务程序。（两级中断嵌套如下图）</p>
+<p><img src="https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=705153047,3570510540&fm=26&gp=0.jpg"></p>
+<p>8051单片机有一个中断优先级寄存器IP。通过对IP相应位的赋值来进行各中断源中断优先级的设置。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201125172951231.png#pic_center"></p>
+<p>PX0:/INT0中断优先级控制    0：低优先级    1：高优先级</p>
+<p>PT0:T0中断优先级控制    0：低优先级    1：高优先级</p>
+<p>PX1:/INT1中断优先级控制    0：低优先级    1：高优先级</p>
+<p>PT1:T1中断优先级控制    0：低优先级    1：高优先级</p>
+<p>PS:串行口中断优先级控制    0：低优先级    1：高优先级</p>
+<p>如果没有设置优先级的话就会按照自然优先级来排序</p>
+<p>外部中断0——定时 /计数器T0——外部中断1——定时/计数器T1——串行口中断T1/R1（自左向右由高到低）</p>
+<h4 id="（3）定时-计数器及外部中断控制寄存器TCON"><a href="#（3）定时-计数器及外部中断控制寄存器TCON" class="headerlink" title="（3）定时/计数器及外部中断控制寄存器TCON"></a>（3）定时/计数器及外部中断控制寄存器TCON</h4><p>TCON可设置外部中断申请的形式，控制定时/计数器的计时开始或停止，同时也是各中断源（串口中断除外）是否申请中断的标志位。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201125173725646.png#pic_center"></p>
+<p>IT0:选择外部中断0的触发方式       IT0=0,为电平触发方式，低电平有效      IT0=1,为边沿触发方式，P3.2引脚信号出现下降沿有效</p>
+<p>IE0:外部中断0请求源（/INT0）标志。IE0=1外部中断0向CPU请求中断，当CPU响应外部中断时，由硬件清“0”IE0（边沿触发方式）</p>
+<p>IT1:选择外部中断1的触发方式       IT1=0,为电平触发方式，低电平有效      IT1=1,为边沿触发方式，P3.3引脚信号出现下降沿有效</p>
+<p>IE1:外部中断1请求源（/INT1）标志。IE1=1外部中断1向CPU请求中断，当CPU响应外部中断时，由硬件清“0”IE1（边沿触发方式）</p>
+<p>TR0:T0的启动和停止控制位，置1启动，清0停止</p>
+<p>TF0:T0溢出中断标志。T0被允许计数后，从初值开始加一计数，当产生溢出时，由硬件置“1”TF0，向CPU请求中断，一直保持CPU响应该中断时，才由硬件置0；</p>
+<p>TR1:T1的启动和停止控制位，置1启动，清0停止</p>
+<p>TF1:T1溢出中断标志。T1被允许计数后，从初值开始加一计数，当产生溢出时，由硬件置“1”TF1，向CPU请求中断，一直保持CPU响应该中断时，才由硬件置0；</p>
+<h4 id="（4）串口控制寄存器SCON"><a href="#（4）串口控制寄存器SCON" class="headerlink" title="（4）串口控制寄存器SCON"></a>（4）串口控制寄存器SCON</h4><p>SCON是串口控制寄存器，其中TI和RI是作为串口中断请求标志，所以也是串口中断请求寄存器。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201125181627255.png#pic_center"></p>
+<p>RI:接收中断请求标志位，当串行口接收完一帧串行数据时，单片机使RI自动置1，请求中断。CPU响应中断后，用软件对RI清0.</p>
+<p>TI:串行口发送中断请求标志，当串行口发送完一帧串行数据时，单片机使TI自动置1，请求中断。CPU响应中断后，用软件对TI清0.</p>
+<h2 id="四、外部中断"><a href="#四、外部中断" class="headerlink" title="四、外部中断"></a>四、外部中断</h2><p>外部中断是指从单片机外部引脚/INT0（P3.2）、/INT1(P3.3)输入中断请求信号的中断，即外部中断源有两个。</p>
+<p>外部中断请求/INT0、/INT1有两种触发方式：电平触发和跳变（边沿）触发。触发方式可以通过对特殊功能寄存器TCON编程来选择。</p>
+<h3 id="1-硬件连接"><a href="#1-硬件连接" class="headerlink" title="1.硬件连接"></a>1.硬件连接</h3><p><img src="https://img-blog.csdnimg.cn/20201125190305957.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70#pic_center"></p>
+<h3 id="2-程序设计"><a href="#2-程序设计" class="headerlink" title="2.程序设计"></a>2.程序设计</h3><p><img src="https://img-blog.csdnimg.cn/20201125185313754.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70#pic_center"></p>
+<h2 id="五、定时-计数器"><a href="#五、定时-计数器" class="headerlink" title="五、定时/计数器"></a>五、定时/计数器</h2><h2 id="六、串行通信"><a href="#六、串行通信" class="headerlink" title="六、串行通信"></a>六、串行通信</h2>
             </div>
             <hr/>
 
