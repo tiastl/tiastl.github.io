@@ -483,7 +483,114 @@
 <p>外部中断请求/INT0、/INT1有两种触发方式：电平触发和跳变（边沿）触发。触发方式可以通过对特殊功能寄存器TCON编程来选择。</p>
 <h3 id="1-硬件连接"><a href="#1-硬件连接" class="headerlink" title="1.硬件连接"></a>1.硬件连接</h3><p><img src="https://img-blog.csdnimg.cn/20201125190305957.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70#pic_center"></p>
 <h3 id="2-程序设计"><a href="#2-程序设计" class="headerlink" title="2.程序设计"></a>2.程序设计</h3><p><img src="https://img-blog.csdnimg.cn/20201125185313754.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70#pic_center"></p>
-<h2 id="五、定时-计数器"><a href="#五、定时-计数器" class="headerlink" title="五、定时/计数器"></a>五、定时/计数器</h2><h2 id="六、串行通信"><a href="#六、串行通信" class="headerlink" title="六、串行通信"></a>六、串行通信</h2>
+<h2 id="五、定时-计数器"><a href="#五、定时-计数器" class="headerlink" title="五、定时/计数器"></a>五、定时/计数器</h2><h3 id="1-定时-计数器的结构和工作原理"><a href="#1-定时-计数器的结构和工作原理" class="headerlink" title="1.定时/计数器的结构和工作原理"></a>1.定时/计数器的结构和工作原理</h3><p>定时/计数器的实质是加一计数器，对脉冲的个数进行计数，计数器每接收到一个脉冲，计数值加一，当接收满阈值后，再来一个脉冲，计数值清0表明这一轮计数的结束。定时和计数两种模式的区别就是计数信号的来源不同。</p>
+<p>8051系列单片机内部有两个16位的定时/计数器T0和T1，他们均是可编程的定时/计数器。以定时/计数器0为例（如下图）</p>
+<p><img src="https://img-blog.csdnimg.cn/20201126160058320.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70#pic_center"></p>
+<p>定时器模式（C/T=0）是系统时钟信号经12分频后的内部脉冲信号（机器周期）计数。由于系统时钟频率是定值，可根据计数值计算出定时时间 。两个定时/计数器属于加一计数器，即每计一个脉冲，计数器加一。</p>
+<p>计数器模式（C/T=1）是对加在T0(P3.4)的外部脉冲进行计数。</p>
+<h3 id="2-定时-计数器的寄存器"><a href="#2-定时-计数器的寄存器" class="headerlink" title="2.定时/计数器的寄存器"></a>2.定时/计数器的寄存器</h3><p>在单片机中有两个特殊功能寄存器与定时/计数有关，他就是TMOD和TCON。</p>
+<h4 id="（1）定时器工作方式寄存器TMOD"><a href="#（1）定时器工作方式寄存器TMOD" class="headerlink" title="（1）定时器工作方式寄存器TMOD"></a>（1）定时器工作方式寄存器TMOD</h4><p><img src="https://img-blog.csdnimg.cn/2020112713404894.png"></p>
+<p>M0,M1：工作方式控制位</p>
+<table>
+<thead>
+<tr>
+<th align="center">M1M0</th>
+<th align="center">工作方式</th>
+<th align="center">功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">00</td>
+<td align="center">方式0</td>
+<td align="center">13位定时/计数器，由TL的低5位和TH的8位构成</td>
+</tr>
+<tr>
+<td align="center">01</td>
+<td align="center">方式1</td>
+<td align="center">16位定时/计数器</td>
+</tr>
+<tr>
+<td align="center">10</td>
+<td align="center">方式2</td>
+<td align="center">8位自动重装定时/计数器，TL计数，TH存放初值</td>
+</tr>
+<tr>
+<td align="center">11</td>
+<td align="center">方式3</td>
+<td align="center">T0用作两个独立的8位计数器，此时，TL0既能定时又可计数；TH0只能定时。T1没有方式3</td>
+</tr>
+</tbody></table>
+<p>C/T：计数/定时方式选择位</p>
+<p>1：定时工作方式，对片内机器周期脉冲计数，用作定时器</p>
+<p>0：计数工作方式，对外部事件脉冲进行计数，用作计数器</p>
+<p>GATE:门控位</p>
+<p>GATE=0,软件启动定时/计数器，即运行只受TCON中运行控制位TR0/TR1的控制</p>
+<p>GATE=1，软件和硬件共同启动定时/计数器，只有当INT0/INT1=0且TR0/TR1=1,T0/T1才能运行</p>
+<h4 id="（2）定时-计数器控制寄存器TCON"><a href="#（2）定时-计数器控制寄存器TCON" class="headerlink" title="（2）定时/计数器控制寄存器TCON"></a>（2）定时/计数器控制寄存器TCON</h4><p><img src="https://img-blog.csdnimg.cn/20201125173725646.png#pic_center"></p>
+<p>IT0:选择外部中断0的触发方式       IT0=0,为电平触发方式，低电平有效      IT0=1,为边沿触发方式，P3.2引脚信号出现下降沿有效</p>
+<p>IE0:外部中断0请求源（/INT0）标志。IE0=1外部中断0向CPU请求中断，当CPU响应外部中断时，由硬件清“0”IE0（边沿触发方式）</p>
+<p>IT1:选择外部中断1的触发方式       IT1=0,为电平触发方式，低电平有效      IT1=1,为边沿触发方式，P3.3引脚信号出现下降沿有效</p>
+<p>IE1:外部中断1请求源（/INT1）标志。IE1=1外部中断1向CPU请求中断，当CPU响应外部中断时，由硬件清“0”IE1（边沿触发方式）</p>
+<p>TR0:T0的启动和停止控制位，置1启动，清0停止</p>
+<p>TF0:T0溢出中断标志。T0被允许计数后，从初值开始加一计数，当产生溢出时，由硬件置“1”TF0，向CPU请求中断，一直保持CPU响应该中断时，才由硬件置0；</p>
+<p>TR1:T1的启动和停止控制位，置1启动，清0停止</p>
+<p>TF1:T1溢出中断标志。T1被允许计数后，从初值开始加一计数，当产生溢出时，由硬件置“1”TF1，向CPU请求中断，一直保持CPU响应该中断时，才由硬件置0；</p>
+<h3 id="3-程序设计"><a href="#3-程序设计" class="headerlink" title="3.程序设计"></a>3.程序设计</h3><p><img src="https://img-blog.csdnimg.cn/20201127140849825.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70"></p>
+<h2 id="六、串口通信"><a href="#六、串口通信" class="headerlink" title="六、串口通信"></a>六、串口通信</h2><h3 id="1-串口内部结构"><a href="#1-串口内部结构" class="headerlink" title="1.串口内部结构"></a>1.串口内部结构</h3><p>80C51内部有一个全双工的串行通信口，具有串行接收和发送缓存器 （SBUF）这两个在物理上独立的接发送器，但他们共同占用一个地址99H，所以他们的名字都叫SBUF。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201127143622933.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70"></p>
+<p>TXD对应单片机上的 P3.1引脚，是数据发送引脚；RXD对应单片机上的P3.0引脚，是数据接收引脚；还用到了定时器1的TH1,TL1两个计数器寄存器，在这里被用来设置串口通信的波特率；TI,RI分别为发送数据成功标志位和接收数据成功标志位，当这两个标志位其中一个置一的同时，若串口通信中断允许位ES也为1的话，进入串口中断函数。</p>
+<h3 id="2-串口相关寄存器"><a href="#2-串口相关寄存器" class="headerlink" title="2.串口相关寄存器"></a>2.串口相关寄存器</h3><h4 id="串口控制寄存器SCON和PCON"><a href="#串口控制寄存器SCON和PCON" class="headerlink" title="串口控制寄存器SCON和PCON"></a>串口控制寄存器SCON和PCON</h4><p><img src="https://img-blog.csdnimg.cn/20201127145019891.png"></p>
+<table>
+<thead>
+<tr>
+<th>SM0</th>
+<th>SM1</th>
+<th>方式</th>
+<th>说明</th>
+<th>波特率</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>移位寄存器（可用于IO口扩展）</td>
+<td>固定，fosc/12</td>
+</tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>10位异步收发器（8位数据）</td>
+<td>可变，由T1溢出率决定</td>
+</tr>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>2</td>
+<td>11位异步收发器（9位数据）</td>
+<td>固定，fosc/64或fosc/32</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>11位异步收发器（9位数据）</td>
+<td>可变，由T1溢出率决定</td>
+</tr>
+</tbody></table>
+<p>SM2:允许方式2或方式3多机通信控制位。在方式2或方式3时，如SM2位为1, REN位为1，则从机处于只有接收到RB8位为1 (地址帧)时才激活中断请求标志位RI为1,并向主机请求中断处理。被确认为寻址的丛机则复位SM2位为0，从而才接收RB8为0的数据帧。在方式1时，如果SM2位为1，则只有在接收到有效的停止位时才置位中断请求标志位RI为1;在方式0时，SM2应为0。</p>
+<p>REN：允许/禁止串行接收控制位。由软件置位REN，即REN=1为允许串行接收状态，可启动串行接收器RxD，开始接收信息。软件复位REN，即REN=0， 则禁止接收。</p>
+<p>TB8: 在方式2或方式3，它为要发送的第9位数据，按需要由软件置位或清0。例如，可用作数据的校验位或多机通信中表示地址帧/数据帧的标志位。</p>
+<p>RB8:在方式2或方式3，是接收到的第9位数据。在方式1，若SM2=0，则RB8是接收到的停止位。方式0不用RB8。</p>
+<p>TI:发送中断请求标志位。在方式0，当串行发送数据第8位结束时，由内部硬件自动置位，即TI=1，向主机请求中断，响应中断后必须用软件复位，即TI=0。 在其他方式中，则在停止位开始发送时由内部硬件置位，必须用软件复位。</p>
+<p>RI:接收中断请求标志位。在方式0，当串行接收到第8位结束时由内部硬件自动置位RI=1,向主机请求中断，响应中断后必须用软件复位，即RI=0。 在其他方式中，串行接收到停止位的中间时刻由内部硬件置位，即RI=1 ( 例外情况见SM2说明)，必须由软件复位，即RI=0。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201127145023733.png"></p>
+<p>SMOD：波特率选择位。当用软件置位SMOD，即SMOD=1，则使串行通信方式1，2，3的波特率加倍；SMOD=0,则各工作方式波特率加倍。复位时SMOD=0.</p>
+<h3 id="3-程序设计-1"><a href="#3-程序设计-1" class="headerlink" title="3.程序设计"></a>3.程序设计</h3><p><img src="https://img-blog.csdnimg.cn/20201127151944377.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ0NTQzNDc2,size_16,color_FFFFFF,t_70"></p>
+<h2 id="七、补充"><a href="#七、补充" class="headerlink" title="七、补充"></a>七、补充</h2><h3 id="8255芯片"><a href="#8255芯片" class="headerlink" title="8255芯片"></a>8255芯片</h3><p>先看这个<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/8255%E8%8A%AF%E7%89%87/3699882?fr=aladdin">8255百度百科</a></p>
+<p>。。。。未完待续</p>
+
             </div>
             <hr/>
 
